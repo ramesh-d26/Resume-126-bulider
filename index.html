@@ -1,175 +1,232 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed A4 ATS Resume Builder</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        /* CRITICAL: Fixed A4 Dimensions */
-        #resume-preview {
-            width: 210mm;
-            height: 297mm; /* Fixed Height to prevent multiple pages */
-            padding: 12mm 15mm;
-            margin: auto;
-            background: white;
-            font-family: 'Times New Roman', Times, serif;
-            color: #000;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Clips any text that goes beyond one page */
-        }
-        .section-line {
-            border-bottom: 1.5px solid #000;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-top: 8px;
-            margin-bottom: 4px;
-            font-size: 12px;
-        }
-        .item-header { font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; }
-        .text-content { font-size: 10.5px; line-height: 1.4; margin-bottom: 4px; }
-        @media screen and (max-width: 1024px) {
-            #preview-container { transform: scale(0.45); transform-origin: top center; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume AI Builder</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+body {
+    background: linear-gradient(to right, #0f172a, #1e293b);
+}
+
+#resume-preview {
+    width: 210mm;
+    height: 297mm;
+    padding: 12mm;
+    background: white;
+    font-family: 'Times New Roman';
+    overflow: hidden;
+}
+
+.section {
+    border-bottom: 2px solid black;
+    font-weight: bold;
+    margin-top: 8px;
+}
+</style>
 </head>
-<body class="bg-zinc-900 text-zinc-100">
 
-    <div class="flex flex-col lg:flex-row h-screen overflow-hidden">
-        <aside class="w-full lg:w-2/5 bg-white text-zinc-900 p-6 overflow-y-auto">
-            <h1 class="text-xl font-black text-blue-600 mb-4 tracking-tighter">ATS_FIX_ENGINE</h1>
+<body class="text-white">
 
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <input type="text" id="nameI" placeholder="Full Name" class="p-2 border rounded text-sm" oninput="render()">
-                <input type="text" id="emailI" placeholder="Email" class="p-2 border rounded text-sm" oninput="render()">
-                <input type="text" id="phoneI" placeholder="Phone" class="p-2 border rounded text-sm" oninput="render()">
-                <input type="text" id="locI" placeholder="Location" class="p-2 border rounded text-sm" oninput="render()">
-                <input type="text" id="linkI" placeholder="LinkedIn URL" class="p-2 border rounded text-sm col-span-2" oninput="render()">
-            </div>
+<!-- 🔥 NAVBAR -->
+<nav class="bg-zinc-900 text-white px-6 py-3 flex justify-between items-center shadow-lg">
+    
+    <h1 class="text-xl font-bold text-blue-500">
+        Resume<span class="text-white">AI</span>
+    </h1>
 
-            <div class="mb-4">
-                <h3 class="font-bold border-b text-sm mb-2">Technical Skills & Tools</h3>
-                <input type="text" id="skillsI" placeholder="Skills (Python, JS, Java...)" class="w-full p-2 mb-1 border rounded text-sm" oninput="render()">
-                <input type="text" id="toolsI" placeholder="Tools (AWS, Docker, Git...)" class="w-full p-2 border rounded text-sm" oninput="render()">
-            </div>
-
-            <div id="expBox" class="mb-4">
-                <h3 class="font-bold border-b text-sm mb-2">Experience</h3>
-                <div class="exp-item p-2 bg-gray-50 border rounded mb-2">
-                    <input type="text" placeholder="Company" class="e-comp w-full p-1 mb-1 border text-sm" oninput="render()">
-                    <input type="text" placeholder="Role" class="e-role w-full p-1 mb-1 border text-sm" oninput="render()">
-                    <textarea placeholder="Bullet points" class="e-desc w-full p-1 border text-sm h-16" oninput="render()"></textarea>
-                </div>
-            </div>
-            <button onclick="addMore('expBox')" class="text-xs text-blue-600 mb-4 underline">+ Add Company</button>
-
-            <div id="projBox" class="mb-4">
-                <h3 class="font-bold border-b text-sm mb-2">Projects</h3>
-                <div class="proj-item p-2 bg-gray-50 border rounded mb-2">
-                    <input type="text" placeholder="Project Name" class="p-name w-full p-1 mb-1 border text-sm" oninput="render()">
-                    <textarea placeholder="Technologies & Description" class="p-desc w-full p-1 border text-sm h-16" oninput="render()"></textarea>
-                </div>
-            </div>
-            <button onclick="addMore('projBox')" class="text-xs text-green-600 mb-4 underline">+ Add Project</button>
-
-            <div class="mb-4">
-                <h3 class="font-bold border-b text-sm mb-2">Education & Certs</h3>
-                <input type="text" id="eduI" placeholder="Degree & College" class="w-full p-2 mb-1 border rounded text-sm" oninput="render()">
-                <input type="text" id="certI" placeholder="Certifications (AWS, etc.)" class="w-full p-2 border rounded text-sm" oninput="render()">
-            </div>
-
-            <button onclick="downloadPDF()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition-all">
-                DOWNLOAD 1-PAGE PDF
-            </button>
-        </aside>
-
-        <main class="w-full lg:w-3/5 p-4 flex justify-center bg-zinc-800 overflow-y-auto">
-            <div id="preview-container">
-                <div id="resume-preview">
-                    <div class="text-center border-b pb-2">
-                        <h1 id="oname" class="text-xl font-bold uppercase tracking-tight">FULL NAME</h1>
-                        <div class="text-[10px]">
-                            <span id="oemail">Email</span> | <span id="ophone">Phone</span> | <span id="oloc">Location</span>
-                        </div>
-                        <div id="osocial" class="text-[10px] text-blue-800 italic"></div>
-                    </div>
-
-                    <div class="section-line">Technical Skills</div>
-                    <p id="oskills" class="text-content font-bold"></p>
-
-                    <div class="section-line">Tools & Technologies</div>
-                    <p id="otools" class="text-content"></p>
-
-                    <div class="section-line">Professional Experience</div>
-                    <div id="oexp"></div>
-
-                    <div class="section-line">Key Projects</div>
-                    <div id="oproj"></div>
-
-                    <div class="section-line">Education</div>
-                    <p id="oedu" class="text-content"></p>
-
-                    <div class="section-line">Certifications</div>
-                    <p id="ocert" class="text-content"></p>
-                </div>
-            </div>
-        </main>
+    <div class="hidden md:flex gap-6 text-sm">
+        <a href="#" class="hover:text-blue-400">Home</a>
+        <a href="#expBox" class="hover:text-blue-400">Experience</a>
+        <a href="#projBox" class="hover:text-blue-400">Projects</a>
     </div>
 
-    <script>
-        function addMore(id) {
-            const box = document.getElementById(id);
-            const clone = box.querySelector('div').cloneNode(true);
-            clone.querySelectorAll('input, textarea').forEach(i => i.value = '');
-            box.appendChild(clone);
-            render();
-        }
+    <button onclick="downloadPDF()" 
+        class="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+        Download
+    </button>
 
-        function render() {
-            document.getElementById('oname').innerText = document.getElementById('nameI').value || "FULL NAME";
-            document.getElementById('oemail').innerText = document.getElementById('emailI').value || "email@domain.com";
-            document.getElementById('ophone').innerText = document.getElementById('phoneI').value || "000-000-0000";
-            document.getElementById('oloc').innerText = document.getElementById('locI').value || "City, State";
-            document.getElementById('osocial').innerText = document.getElementById('linkI').value ? "LinkedIn: " + document.getElementById('linkI').value : "";
+</nav>
 
-            document.getElementById('oskills').innerText = document.getElementById('skillsI').value;
-            document.getElementById('otools').innerText = document.getElementById('toolsI').value;
-            document.getElementById('oedu').innerText = document.getElementById('eduI').value;
-            document.getElementById('ocert').innerText = document.getElementById('certI').value;
+<!-- MAIN -->
+<div class="flex flex-col lg:flex-row h-[calc(100vh-60px)]">
 
-            // Experience
-            let expH = '';
-            document.querySelectorAll('.exp-item').forEach(i => {
-                const c = i.querySelector('.e-comp').value;
-                const r = i.querySelector('.e-role').value;
-                const d = i.querySelector('.e-desc').value;
-                if(c) expH += `<div class="mb-2"><div class="item-header"><span>${r}</span><span>${c}</span></div><p class="text-content">• ${d}</p></div>`;
-            });
-            document.getElementById('oexp').innerHTML = expH;
+<!-- LEFT PANEL -->
+<div class="w-full lg:w-2/5 bg-white text-black p-5 overflow-y-auto">
 
-            // Projects
-            let projH = '';
-            document.querySelectorAll('.proj-item').forEach(i => {
-                const n = i.querySelector('.p-name').value;
-                const d = i.querySelector('.p-desc').value;
-                if(n) projH += `<div class="mb-2"><div class="item-header"><span>${n}</span></div><p class="text-content">• ${d}</p></div>`;
-            });
-            document.getElementById('oproj').innerHTML = projH;
-        }
+<h1 class="text-2xl font-bold text-blue-600 mb-4">SMART RESUME BUILDER</h1>
 
-        function downloadPDF() {
-            const element = document.getElementById('resume-preview');
-            const opt = {
-                margin: 0,
-                filename: 'ATS_Resume_OnePage.pdf',
-                image: { type: 'jpeg', quality: 1 },
-                html2canvas: { scale: 4, useCORS: true, logging: false, width: 794 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
-        }
-    </script>
+<input id="nameI" placeholder="Full Name" class="w-full p-2 border mb-2" oninput="render()">
+<input id="emailI" placeholder="Email" class="w-full p-2 border mb-2" oninput="render()">
+<input id="phoneI" placeholder="Phone" class="w-full p-2 border mb-2" oninput="render()">
+
+<input id="skillsI" placeholder="Skills" class="w-full p-2 border mb-2" oninput="render()">
+<input id="toolsI" placeholder="Tools" class="w-full p-2 border mb-2" oninput="render()">
+
+<!-- PHOTO -->
+<input type="file" accept="image/*" onchange="uploadImage(event)" class="mb-2">
+
+<!-- EXPERIENCE -->
+<div id="expBox">
+<h3 class="font-bold">Experience</h3>
+<div class="exp-item">
+<input class="e-comp w-full border p-1 mb-1" placeholder="Company" oninput="render()">
+<input class="e-role w-full border p-1 mb-1" placeholder="Role" oninput="render()">
+<textarea class="e-desc w-full border p-1" placeholder="Description" oninput="render()"></textarea>
+</div>
+</div>
+
+<button onclick="addMore('expBox')" class="text-blue-600 mb-3">+ Add Experience</button>
+
+<!-- PROJECT -->
+<div id="projBox">
+<h3 class="font-bold mt-3">Projects</h3>
+<div class="proj-item">
+<input class="p-name w-full border p-1 mb-1" placeholder="Project Name" oninput="render()">
+<textarea class="p-desc w-full border p-1" placeholder="Description" oninput="render()"></textarea>
+</div>
+</div>
+
+<button onclick="addMore('projBox')" class="text-green-600 mb-3">+ Add Project</button>
+
+<input id="eduI" placeholder="Education" class="w-full p-2 border mt-2" oninput="render()">
+
+<!-- BUTTONS -->
+<button onclick="downloadPDF()" class="w-full bg-blue-600 text-white p-3 mt-3">Download PDF</button>
+<button onclick="checkATS()" class="w-full bg-green-600 p-3 mt-2">Check ATS Score</button>
+<button onclick="generateSummary()" class="w-full bg-purple-600 p-3 mt-2">AI Suggest</button>
+<button onclick="changeTheme()" class="w-full bg-black text-white p-3 mt-2">Dark Resume</button>
+
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="w-full lg:w-3/5 flex justify-center items-center p-4 overflow-y-auto">
+
+<div id="resume-preview">
+
+<div class="text-center border-b pb-2">
+<img id="photo" class="w-20 h-20 rounded-full mx-auto mb-2"/>
+<h1 id="oname" class="text-xl font-bold">NAME</h1>
+<p id="oemail"></p>
+<p id="ophone"></p>
+</div>
+
+<div class="section">Skills</div>
+<p id="oskills"></p>
+
+<div class="section">Tools</div>
+<p id="otools"></p>
+
+<div class="section">Experience</div>
+<div id="oexp"></div>
+
+<div class="section">Projects</div>
+<div id="oproj"></div>
+
+<div class="section">Education</div>
+<p id="oedu"></p>
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// ADD MORE
+function addMore(id){
+    const box = document.getElementById(id);
+    const clone = box.children[1].cloneNode(true);
+    clone.querySelectorAll('input,textarea').forEach(i => i.value='');
+    box.appendChild(clone);
+}
+
+// RENDER
+function render(){
+    oname.innerText = nameI.value;
+    oemail.innerText = emailI.value;
+    ophone.innerText = phoneI.value;
+    oskills.innerText = skillsI.value;
+    otools.innerText = toolsI.value;
+    oedu.innerText = eduI.value;
+
+    // AUTO SAVE
+    localStorage.setItem("resume", JSON.stringify({
+        name: nameI.value,
+        email: emailI.value
+    }));
+
+    // EXPERIENCE
+    let expHTML='';
+    document.querySelectorAll('.exp-item').forEach(i=>{
+        let c=i.querySelector('.e-comp').value;
+        let r=i.querySelector('.e-role').value;
+        let d=i.querySelector('.e-desc').value;
+        if(c) expHTML+=`<p><b>${r}</b> - ${c}<br>• ${d}</p>`;
+    });
+    oexp.innerHTML=expHTML;
+
+    // PROJECT
+    let projHTML='';
+    document.querySelectorAll('.proj-item').forEach(i=>{
+        let n=i.querySelector('.p-name').value;
+        let d=i.querySelector('.p-desc').value;
+        if(n) projHTML+=`<p><b>${n}</b><br>• ${d}</p>`;
+    });
+    oproj.innerHTML=projHTML;
+}
+
+// LOAD DATA
+window.onload=function(){
+    let data=JSON.parse(localStorage.getItem("resume"));
+    if(data){
+        nameI.value=data.name;
+        emailI.value=data.email;
+        render();
+    }
+}
+
+// PHOTO
+function uploadImage(e){
+    const reader=new FileReader();
+    reader.onload=()=>photo.src=reader.result;
+    reader.readAsDataURL(e.target.files[0]);
+}
+
+// PDF
+function downloadPDF(){
+    html2pdf().from(document.getElementById('resume-preview')).save();
+}
+
+// ATS SCORE
+function checkATS(){
+    let score=0;
+    if(skillsI.value) score+=20;
+    if(toolsI.value) score+=20;
+    if(document.querySelectorAll('.exp-item').length>0) score+=30;
+    if(document.querySelectorAll('.proj-item').length>0) score+=30;
+    alert("ATS Score: "+score+"%");
+}
+
+// AI SUGGEST
+function generateSummary(){
+    let skills=skillsI.value;
+    alert("AI Suggestion: Skilled in "+skills+" with strong problem solving ability.");
+}
+
+// THEME
+function changeTheme(){
+    document.getElementById("resume-preview").style.background="black";
+    document.getElementById("resume-preview").style.color="white";
+}
+
+</script>
+
 </body>
 </html>
+```
